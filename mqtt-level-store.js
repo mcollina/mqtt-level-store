@@ -1,5 +1,6 @@
 
 var level = require('level-browserify');
+var sublevel = require('level-sublevel');
 var msgpack = require('msgpack5');
 
 function Store (options) {
@@ -55,4 +56,29 @@ Store.prototype.close = function (cb) {
   return this;
 };
 
-module.exports.single = Store;
+function Manager (options) {
+  if (!(this instanceof Manager)) {
+    return new Manager(options);
+  }
+
+  if (options && options.level) {
+    this._level = options.level;
+  } else {
+    this._level = level(options);
+  }
+
+  this._sublevel = sublevel(this._level);
+  this.incoming = new Store({ level: this._sublevel.sublevel('incoming') });
+  this.outgoing = new Store({ level: this._sublevel.sublevel('outgoing') });
+}
+
+Manager.single = Store;
+
+Manager.prototype.close = function (done) {
+  this.incoming.close();
+  this.outgoing.close();
+  this._sublevel.close();
+  this._level.close(done);
+};
+
+module.exports = Manager;

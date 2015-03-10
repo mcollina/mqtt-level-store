@@ -4,8 +4,14 @@
   "description": "Store your in-flight mqtt packets in Level",
   "main": "mqtt-level-store.js",
   "scripts": {
-    "test": "mocha test.js"
+    "test": "mocha test.js",
+    "pretest": "npm run check-style",
+    "check-style:eslint": "eslint *.js",
+    "check-style:jshint": "jshint *.js",
+    "check-style:jscs": "jscs *.js",
+    "check-style": "npm run check-style:jshint && npm run check-style:jscs && npm run check-style:eslint"
   },
+  "pre-commit": "test",
   "keywords": [
     "mqtt",
     "level",
@@ -21,10 +27,14 @@
   },
   "devDependencies": {
     "concat-stream": "^1.4.7",
+    "eslint": "^0.16.1",
+    "jscs": "^1.11.3",
+    "jshint": "^2.6.3",
     "level-test": "^1.6.6",
     "levelup": "^0.19.0",
     "mocha": "^2.2.0",
     "mqtt": "^1.1.0",
+    "pre-commit": "^1.0.6",
     "should": "^5.1.0"
   }
 }

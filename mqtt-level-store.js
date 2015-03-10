@@ -1,7 +1,8 @@
+'use strict';
 
-var level = require('level-browserify');
-var sublevel = require('level-sublevel');
-var msgpack = require('msgpack5');
+var level = require('level-browserify'),
+  sublevel = require('level-sublevel'),
+  msgpack = require('msgpack5');
 
 function Store (options) {
   if (!(this instanceof Store)) {
@@ -15,7 +16,7 @@ function Store (options) {
   this._level = options.level;
   this._levelOpts = {
     valueEncoding: msgpack()
-  }
+  };
 }
 
 Store.prototype.put = function (packet, cb) {
@@ -31,14 +32,14 @@ Store.prototype.get = function (packet, cb) {
 Store.prototype.del = function (packet, cb) {
   var key = '' + packet.messageId,
     that = this;
-  this._level.get(key, this._levelOpts, function(err, _packet) {
+  this._level.get(key, this._levelOpts, function (err, _packet) {
     if (err) {
       return cb(err);
     }
 
-    that._level.del(key, this._levelOpts, function(err) {
-      if (err) {
-        return cb(err);
+    that._level.del(key, that._levelOpts, function (err2) {
+      if (err2) {
+        return cb(err2);
       }
 
       cb(null, _packet);
@@ -47,7 +48,7 @@ Store.prototype.del = function (packet, cb) {
   return this;
 };
 
-Store.prototype.createStream = function() {
+Store.prototype.createStream = function () {
   return this._level.createValueStream(this._levelOpts);
 };
 

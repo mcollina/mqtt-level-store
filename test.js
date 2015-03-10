@@ -1,10 +1,10 @@
 'use strict';
 
-var abstractTest = require('mqtt/test/abstract_store');
-var level = require('level-test')();
-var mqttLevelStore = require('./');
-var mqtt = require('mqtt');
-var concat = require('concat-stream')
+var abstractTest = require('mqtt/test/abstract_store'),
+  level = require('level-test')(),
+  mqttLevelStore = require('./'),
+  mqtt = require('mqtt'),
+  concat = require('concat-stream');
 
 describe('mqtt level store', function () {
   abstractTest(function (done) {
@@ -37,15 +37,15 @@ describe('mqtt level store manager', function () {
 });
 
 describe('mqtt.connect flow', function () {
-  var server;
-  var manager;
+  var server,
+    manager;
 
   beforeEach(function (done) {
-    server = new mqtt.Server()
-    server.listen(8883, done)
+    server = new mqtt.Server();
+    server.listen(8883, done);
 
     server.on('client', function (client) {
-      client.on('connect', function (packet) {
+      client.on('connect', function () {
         client.connack({returnCode: 0});
       });
     });
@@ -63,17 +63,17 @@ describe('mqtt.connect flow', function () {
     client.publish('hello', 'world', {qos: 1});
 
     server.once('client', function (serverClient) {
-      serverClient.once('publish', function (p) {
+      serverClient.once('publish', function () {
         serverClient.stream.destroy();
 
-        manager.outgoing.createStream().pipe(concat(function(list) {
-          list.length.should.equal(1)
+        manager.outgoing.createStream().pipe(concat(function (list) {
+          list.length.should.equal(1);
         }));
       });
 
-      server.once('client', function (serverClient) {
-        serverClient.once('publish', function (packet) {
-          serverClient.puback(packet);
+      server.once('client', function (serverClient2) {
+        serverClient2.once('publish', function (packet) {
+          serverClient2.puback(packet);
           client.end();
           done();
         });

@@ -1,6 +1,6 @@
 # MQTT.js Level Store
 
-Store in-flight MQTT.js packets in LevelDB
+Persistent Store for in-flight MQTT.js packets. Works in Node and the Browser thanks to [level-browserify](http://npm.im/level-browserify).
 
 ## Usage
 

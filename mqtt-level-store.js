@@ -57,15 +57,20 @@ Store.prototype.close = function (cb) {
   return this;
 };
 
-function Manager (options) {
+function Manager (path, options) {
   if (!(this instanceof Manager)) {
-    return new Manager(options);
+    return new Manager(path, options);
+  }
+
+  if ('object' === typeof path) {
+    options = path;
+    path = null;
   }
 
   if (options && options.level) {
     this._level = options.level;
   } else {
-    this._level = level(options);
+    this._level = level(path, options);
   }
 
   this._sublevel = sublevel(this._level);

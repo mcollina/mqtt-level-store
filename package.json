@@ -20,6 +20,10 @@
   ],
   "author": "Matteo Collina <matteo.collina@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mcollina/mqtt-level-store.git"
+  },
   "dependencies": {
     "level-browserify": "^0.18.1",
     "level-sublevel": "^6.4.6",

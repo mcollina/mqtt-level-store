@@ -25,7 +25,7 @@
     "url": "git://github.com/mcollina/mqtt-level-store.git"
   },
   "dependencies": {
-    "level-browserify": "^0.18.1",
+    "level-browserify": "^1.0.1",
     "level-sublevel": "^6.4.6",
     "msgpack5": "2.0.0"
   },

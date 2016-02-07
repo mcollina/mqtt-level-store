@@ -6,7 +6,7 @@ Persistent Store for in-flight MQTT.js packets. Works in Node and the Browser th
 
 ```js
 var mqtt = require('mqtt'),
-  level = levelStore('path/to/db');
+  manager = levelStore('path/to/db');
 
 var client = mqtt.connect({
   port: 8883,

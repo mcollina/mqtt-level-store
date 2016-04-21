@@ -1,6 +1,6 @@
 {
   "name": "mqtt-level-store",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Store your in-flight mqtt packets in Level",
   "main": "mqtt-level-store.js",
   "scripts": {

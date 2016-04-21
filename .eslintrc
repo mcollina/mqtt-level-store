@@ -13,10 +13,6 @@
       0,
       false
     ],
-    "no-underscore-dangle": [
-      0,
-      false
-    ],
     "yoda": [
       1,
       "always"
@@ -43,16 +39,12 @@
     "no-nested-ternary": 2,
     "no-undefined": 2,
     "radix": 2,
-    "space-after-function-name": [
+    "space-before-function-paren": [
       1,
       "always"
     ],
-    "space-after-keywords": [
-      2,
-      "always"
-    ],
     "space-before-blocks": 2,
-    "spaced-line-comment": [
+    "spaced-comment": [
       2,
       "always",
       {
@@ -65,8 +57,6 @@
       2,
       "global"
     ],
-    "wrap-iife": 2,
-    "camelcase": false,
-    "new-cap": false
+    "wrap-iife": 2
   }
 }

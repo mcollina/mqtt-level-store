@@ -27,18 +27,18 @@
   "dependencies": {
     "level-browserify": "^1.0.1",
     "level-sublevel": "^6.4.6",
-    "msgpack5": "2.0.0"
+    "msgpack5": "^3.2.0"
   },
   "devDependencies": {
     "concat-stream": "^1.4.7",
-    "eslint": "^0.16.1",
-    "jscs": "^1.11.3",
+    "eslint": "^2.8.0",
+    "jscs": "^3.0.3",
     "jshint": "^2.6.3",
-    "level-test": "^1.6.6",
-    "levelup": "^0.19.0",
+    "level-test": "^2.0.2",
+    "levelup": "^1.2.1",
     "mocha": "^2.2.0",
-    "mqtt": "^1.1.0",
+    "mqtt": "^1.5.0",
     "pre-commit": "^1.0.6",
-    "should": "^5.1.0"
+    "should": "^8.3.1"
   }
 }

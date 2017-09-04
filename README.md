@@ -2,12 +2,17 @@
 
 Persistent Store for in-flight MQTT.js packets. Works in Node and the Browser thanks to [level-browserify](http://npm.im/level-browserify).
 
+## Installation
+
+`npm install mqtt-level-store --save`
+
 ## Usage
 
 ```js
 'use strict';
 
 var mqtt = require('mqtt'),
+  levelStore = require('mqtt-level-store');
   manager = levelStore('path/to/db');
 
 var client = mqtt.connect({
@@ -31,6 +36,8 @@ client.on('connect', function() {
   });
 });
 ```
+
+Note, `path/to/db` is a folder, not a file. Files will be created at the given path.
 
 ## License
 

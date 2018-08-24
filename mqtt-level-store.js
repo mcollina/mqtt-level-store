@@ -3,6 +3,8 @@
 var level = require('level-browserify')
 var sublevel = require('level-sublevel')
 var msgpack = require('msgpack5')
+var Readable = require('readable-stream').Readable
+var streamsOpts = { objectMode: true }
 
 function Store (options) {
   if (!(this instanceof Store)) {
@@ -17,15 +19,31 @@ function Store (options) {
   this._levelOpts = {
     valueEncoding: msgpack()
   }
+  this._prevDate = null
+  this._sameDateCount = 0
 }
 
 Store.prototype.put = function (packet, cb) {
-  this._level.put('' + packet.messageId, packet, this._levelOpts, cb)
+  var date = Date.now()
+  if (this._prevDate === date) {
+    // 1000 packets can be ordered in the same date (milliseconds)
+    this._sameDateCount += 0.001
+    date += this._sameDateCount
+  } else {
+    this._sameDateCount = 0
+    this._prevDate = date
+  }
+  this._level.put('' + packet.messageId, [date, packet], this._levelOpts, cb)
   return this
 }
 
 Store.prototype.get = function (packet, cb) {
-  this._level.get('' + packet.messageId, this._levelOpts, cb)
+  this._level.get('' + packet.messageId, this._levelOpts, function (err, _timePacket) {
+    if (err) {
+      return cb(err)
+    }
+    cb(null, _timePacket[1])
+  })
   return this
 }
 
@@ -33,7 +51,7 @@ Store.prototype.del = function (packet, cb) {
   var key = '' + packet.messageId
   var that = this
 
-  this._level.get(key, this._levelOpts, function (err, _packet) {
+  this._level.get(key, this._levelOpts, function (err, _timePacket) {
     if (err) {
       return cb(err)
     }
@@ -43,14 +61,53 @@ Store.prototype.del = function (packet, cb) {
         return cb(err2)
       }
 
-      cb(null, _packet)
+      cb(null, _timePacket[1])
     })
   })
   return this
 }
 
 Store.prototype.createStream = function () {
-  return this._level.createValueStream(this._levelOpts)
+  var stream = new Readable(streamsOpts)
+  var destroyed = false
+  var timePackets = []
+  var i = 0
+
+  var levelStream = this._level.createValueStream(this._levelOpts)
+    .on('data', function (data) {
+      timePackets.push(data)
+    })
+    .on('end', function () {
+      timePackets.sort(function (lhs, rhs) {
+        return lhs[0] - rhs[0]
+      })
+      stream.resume()
+    })
+
+  stream._read = function () {
+    if (!destroyed && i < timePackets.length) {
+      this.push(timePackets[i++][1])
+    } else {
+      this.push(null)
+    }
+  }
+
+  stream.destroy = function () {
+    if (destroyed) {
+      return
+    }
+
+    levelStream.destroy()
+    var self = this
+
+    destroyed = true
+    process.nextTick(function () {
+      self.emit('close')
+    })
+  }
+
+  stream.pause()
+  return stream
 }
 
 Store.prototype.close = function (cb) {

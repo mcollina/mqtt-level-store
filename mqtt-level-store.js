@@ -19,38 +19,112 @@ function Store (options) {
   }
 }
 
+const zeroPadding = (function () {
+  // width and padding calculates only once
+  const width = parseInt(Number.MAX_SAFE_INTEGER).toString(10).length
+  const padding = new Array(width + 1).join('0')
+  return function (num) {
+    return (padding + num).slice(-width)
+  }
+})()
+
 Store.prototype.put = function (packet, cb) {
-  this._level.put('' + packet.messageId, packet, this._levelOpts, cb)
+  var date = zeroPadding(Date.now())
+  if (this._prevDate === date) {
+    ++this._sameDateCount
+  } else {
+    this._sameDateCount = 0
+    this._prevDate = date
+  }
+  date += zeroPadding(this._sameDateCount)
+
+  var that = this
+  this._level.get(
+    'packets~' + packet.messageId,
+    this._levelOpts,
+    function (err, _date) {
+      if (err) {
+        if (err.notFound) {
+          var cmd = [
+            {type: 'put', key: 'packets~' + packet.messageId, value: date},
+            {type: 'put', key: 'packet-by-date~' + date + '~' + packet.messageId, value: packet}
+          ]
+          that._level.batch(cmd, that._levelOpts, cb)
+        } else {
+          cb(err)
+        }
+      } else {
+        that._level.get(
+          'packet-by-date~' + _date + '~' + packet.messageId,
+          that._levelOpts,
+          function (err, _packet) {
+            if (err) return cb(err)
+            if (packet.cmd === _packet.cmd) {
+              cb()
+            } else {
+              that._level.put('packet-by-date~' + _date + '~' + packet.messageId, packet, that._levelOpts,
+                function () {
+                  cb()
+                }
+              )
+            }
+          })
+      }
+    })
   return this
 }
 
 Store.prototype.get = function (packet, cb) {
-  this._level.get('' + packet.messageId, this._levelOpts, cb)
+  var that = this
+  this._level.get(
+    'packets~' + packet.messageId,
+    this._levelOpts,
+    function (err, date) {
+      if (err) return cb(err)
+      that._level.get(
+        'packet-by-date~' + date + '~' + packet.messageId,
+        that._levelOpts,
+        function (err, packet) {
+          cb(err, packet)
+        })
+    })
   return this
 }
 
 Store.prototype.del = function (packet, cb) {
-  var key = '' + packet.messageId
   var that = this
-
-  this._level.get(key, this._levelOpts, function (err, _packet) {
-    if (err) {
-      return cb(err)
-    }
-
-    that._level.del(key, that._levelOpts, function (err2) {
-      if (err2) {
-        return cb(err2)
-      }
-
-      cb(null, _packet)
+  this._level.get(
+    'packets~' + packet.messageId,
+    this._levelOpts,
+    function (err, date) {
+      if (err) return cb(err)
+      that._level.get(
+        'packet-by-date~' + date + '~' + packet.messageId,
+        that._levelOpts,
+        function (err, _packet) {
+          if (err) return cb(err)
+          var cmd = [
+            {type: 'del', key: 'packets~' + packet.messageId},
+            {type: 'del', key: 'packet-by-date~' + date + '~' + packet.messageId}
+          ]
+          that._level.batch(
+            cmd,
+            that._levelOpts,
+            function (err) {
+              if (err) return cb(err)
+              cb(null, _packet)
+            })
+        })
     })
-  })
   return this
 }
 
 Store.prototype.createStream = function () {
-  return this._level.createValueStream(this._levelOpts)
+  var opts = this._levelOpts
+  opts.keys = false
+  opts.lt = 'packet-by-date~\xff'
+  opts.gt = 'packet-by-date~'
+  return this._level.createReadStream(opts)
 }
 
 Store.prototype.close = function (cb) {

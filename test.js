@@ -62,8 +62,10 @@ describe('mqtt.connect flow', function () {
   })
 
   afterEach(function (done) {
-    server.close(function () {
-      done()
+    manager.close(function () {
+      server.close(function () {
+        done()
+      })
     })
   })
 
@@ -128,7 +130,7 @@ describe('mqtt.connect flow', function () {
                 serverCount.should.equal(3)
                 client.end()
                 done()
-              }, 10)
+              }, 200)
               break
             default:
               break

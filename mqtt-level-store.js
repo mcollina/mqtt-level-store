@@ -17,6 +17,8 @@ function Store (options) {
   this._levelOpts = {
     valueEncoding: msgpack()
   }
+  this._sameDateCount = 0
+  this._prevDate = null
 }
 
 const zeroPadding = (function () {
@@ -29,7 +31,7 @@ const zeroPadding = (function () {
 })()
 
 Store.prototype.put = function (packet, cb) {
-  var date = zeroPadding(Date.now())
+  var date = new Date().toISOString()
   if (this._prevDate === date) {
     ++this._sameDateCount
   } else {
@@ -44,30 +46,20 @@ Store.prototype.put = function (packet, cb) {
     this._levelOpts,
     function (err, _date) {
       if (err) {
-        if (err.notFound) {
-          var cmd = [
-            {type: 'put', key: 'packets~' + packet.messageId, value: date},
-            {type: 'put', key: 'packet-by-date~' + date + '~' + packet.messageId, value: packet}
-          ]
-          that._level.batch(cmd, that._levelOpts, cb)
-        } else {
-          cb(err)
-        }
+        if (!err.notFound) return cb(err)
+        var cmd = [
+          {type: 'put', key: 'packets~' + packet.messageId, value: date},
+          {type: 'put', key: 'packet-by-date~' + date + '~' + packet.messageId, value: packet}
+        ]
+        that._level.batch(cmd, that._levelOpts, cb)
       } else {
         that._level.get(
           'packet-by-date~' + _date + '~' + packet.messageId,
           that._levelOpts,
           function (err, _packet) {
             if (err) return cb(err)
-            if (packet.cmd === _packet.cmd) {
-              cb()
-            } else {
-              that._level.put('packet-by-date~' + _date + '~' + packet.messageId, packet, that._levelOpts,
-                function () {
-                  cb()
-                }
-              )
-            }
+            if (packet.cmd === _packet.cmd) return cb()
+            that._level.put('packet-by-date~' + _date + '~' + packet.messageId, packet, that._levelOpts, cb)
           })
       }
     })
@@ -84,9 +76,7 @@ Store.prototype.get = function (packet, cb) {
       that._level.get(
         'packet-by-date~' + date + '~' + packet.messageId,
         that._levelOpts,
-        function (err, packet) {
-          cb(err, packet)
-        })
+        cb)
     })
   return this
 }

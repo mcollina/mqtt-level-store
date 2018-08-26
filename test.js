@@ -128,7 +128,7 @@ describe('mqtt.connect flow', function () {
                 serverCount.should.equal(3)
                 client.end()
                 done()
-              }, 200)
+              }, 10)
               break
             default:
               break

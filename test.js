@@ -61,42 +61,6 @@ describe('mqtt.connect flow', function () {
     manager = mqttLevelStore({ level: level() })
   })
 
-  afterEach(function (done) {
-    manager.close(function () {
-      server.close(function () {
-        done()
-      })
-    })
-  })
-
-  it('should resend messages', function (done) {
-    var client = mqtt.connect({
-      port: 8883,
-      incomingStore: manager.incoming,
-      outgoingStore: manager.outgoing
-    })
-
-    client.publish('hello', 'world', {qos: 1})
-
-    server.once('client', function (serverClient) {
-      serverClient.once('publish', function () {
-        serverClient.stream.destroy()
-
-        manager.outgoing.createStream().pipe(concat(function (list) {
-          list.length.should.equal(1)
-        }))
-      })
-
-      server.once('client', function (serverClient2) {
-        serverClient2.once('publish', function (packet) {
-          serverClient2.puback(packet)
-          client.end()
-          done()
-        })
-      })
-    })
-  })
-
   it('should resend messages by published order', function (done) {
     var serverCount = 0
     var client = mqtt.connect({
@@ -110,9 +74,14 @@ describe('mqtt.connect flow', function () {
     client.publish('topic', 'payload2', {qos: 1})
     client.publish('topic', 'payload3', {qos: 1})
     server.once('client', function (serverClient) {
-      serverClient.on('publish', function () {
+      serverClient.once('publish', function () {
         serverClient.stream.destroy()
+
+        manager.outgoing.createStream().pipe(concat(function (list) {
+          list.length.should.equal(3)
+        }))
       })
+
       server.once('client', function (serverClient2) {
         serverClient2.on('publish', function (packet) {
           serverClient2.puback(packet)

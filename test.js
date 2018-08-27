@@ -61,29 +61,49 @@ describe('mqtt.connect flow', function () {
     manager = mqttLevelStore({ level: level() })
   })
 
-  it('should resend messages', function (done) {
+  it('should resend messages by published order', function (done) {
+    var serverCount = 0
     var client = mqtt.connect({
       port: 8883,
       incomingStore: manager.incoming,
       outgoingStore: manager.outgoing
     })
 
-    client.publish('hello', 'world', {qos: 1})
-
+    client.nextId = 65535
+    client.publish('topic', 'payload1', {qos: 1})
+    client.publish('topic', 'payload2', {qos: 1})
+    client.publish('topic', 'payload3', {qos: 1})
     server.once('client', function (serverClient) {
       serverClient.once('publish', function () {
         serverClient.stream.destroy()
 
         manager.outgoing.createStream().pipe(concat(function (list) {
-          list.length.should.equal(1)
+          list.length.should.equal(3)
         }))
       })
 
       server.once('client', function (serverClient2) {
-        serverClient2.once('publish', function (packet) {
+        serverClient2.on('publish', function (packet) {
           serverClient2.puback(packet)
-          client.end()
-          done()
+          switch (serverCount++) {
+            case 0:
+              packet.payload.toString().should.equal('payload1')
+              break
+            case 1:
+              packet.payload.toString().should.equal('payload2')
+              break
+            case 2:
+              packet.payload.toString().should.equal('payload3')
+              setTimeout(function () {
+                // make sure additional publish shouldn't be received
+                serverCount.should.equal(3)
+                client.end()
+                done()
+              }, 200)
+              break
+            default:
+              break
+          }
         })
       })
     })

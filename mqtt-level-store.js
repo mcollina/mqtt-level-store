@@ -146,10 +146,16 @@ function Manager (path, options) {
 Manager.single = Store
 
 Manager.prototype.close = function (done) {
-  this.incoming.close()
-  this.outgoing.close()
-  this._sublevel.close()
-  this._level.close(done)
+  var that = this
+  this.incoming.close(function () {
+    that.outgoing.close(function () {
+      that._sublevel.close(function () {
+        that._level.close(function () {
+          done()
+        })
+      })
+    })
+  })
 }
 
 module.exports = Manager

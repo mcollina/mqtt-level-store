@@ -55,19 +55,14 @@ describe('mqtt level store manager close', function () {
     var subLevelCloseSaved = errorManager._sublevel.close
     var levelCloseSaved = errorManager._level.close
 
-    var closeReturnError = function (cb, suffix) {
-      var f = function (err) { cb(err) }
-      f('error_' + suffix)
-    }
-
-    errorManager.incoming.close = function (cb) { closeReturnError(cb, 'i') }
-    errorManager.outgoing.close = function (cb) { closeReturnError(cb, 'o') }
-    errorManager._sublevel.close = function (cb) { closeReturnError(cb, 's') }
-    errorManager._level.close = function (cb) { closeReturnError(cb, 'l') }
+    errorManager.incoming.close = function (cb) { cb(new Error('error_i')) }
+    errorManager.outgoing.close = function (cb) { cb(new Error('error_o')) }
+    errorManager._sublevel.close = function (cb) { cb(new Error('error_s')) }
+    errorManager._level.close = function (cb) { cb(new Error('error_l')) }
 
     var expected = {'incoming': 'error_i', 'outgoing': 'error_o', 'sublevel': 'error_s', 'level': 'error_l'}
     errorManager.close(function (err) {
-      should.deepEqual(err, expected)
+      should.deepEqual(JSON.parse(err.message), expected)
       errorManager.incoming.close = incomingCloseSaved
       errorManager.outgoing.close = outgoingCloseSaved
       errorManager._sublevel.close = subLevelCloseSaved

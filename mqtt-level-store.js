@@ -146,15 +146,41 @@ function Manager (path, options) {
 Manager.single = Store
 
 Manager.prototype.close = function (done) {
-  var that = this
-  this.incoming.close(function () {
-    that.outgoing.close(function () {
-      that._sublevel.close(function () {
-        that._level.close(function () {
-          done()
-        })
-      })
-    })
+  var incomingCloseCalled = false
+  var outgoingCloseCalled = false
+  var subLevelCloseCalled = false
+  var levelCloseCalled = false
+  var errors = {}
+
+  var tryAllClosed = function () {
+    if (incomingCloseCalled && outgoingCloseCalled && subLevelCloseCalled && levelCloseCalled) {
+      if (Object.keys(errors).length > 0) {
+        done(errors)
+      } else {
+        done()
+      }
+    }
+  }
+
+  this.incoming.close(function (err) {
+    incomingCloseCalled = true
+    if (err) errors['incoming'] = err
+    tryAllClosed()
+  })
+  this.outgoing.close(function (err) {
+    outgoingCloseCalled = true
+    if (err) errors['outgoing'] = err
+    tryAllClosed()
+  })
+  this._sublevel.close(function (err) {
+    subLevelCloseCalled = true
+    if (err) errors['sublevel'] = err
+    tryAllClosed()
+  })
+  this._level.close(function (err) {
+    levelCloseCalled = true
+    if (err) errors['level'] = err
+    tryAllClosed()
   })
 }
 

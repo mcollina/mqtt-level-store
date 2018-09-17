@@ -9,6 +9,7 @@ var mqtt = require('mqtt')
 var Connection = require('mqtt-connection')
 var concat = require('concat-stream')
 var net = require('net')
+var should = require('should')
 
 describe('mqtt level store', function () {
   abstractTest(function (done) {
@@ -36,6 +37,40 @@ describe('mqtt level store manager', function () {
   describe('outgoing', function () {
     abstractTest(function (done) {
       done(null, manager.outgoing)
+    })
+  })
+})
+
+describe('mqtt level store manager close', function () {
+  it('should finish successfully.', function (done) {
+    var manager = mqttLevelStore({ level: level() })
+    manager.close(done)
+  })
+
+  it('should return errors when failed to close.', function (done) {
+    var errorManager = mqttLevelStore({ level: level() })
+
+    var incomingCloseSaved = errorManager.incoming.close
+    var outgoingCloseSaved = errorManager.outgoing.close
+    var subLevelCloseSaved = errorManager._sublevel.close
+    var levelCloseSaved = errorManager._level.close
+
+    errorManager.incoming.close = function (cb) { cb(new Error('error_i')) }
+    errorManager.outgoing.close = function (cb) { cb(new Error('error_o')) }
+    errorManager._sublevel.close = function (cb) { cb(new Error('error_s')) }
+    errorManager._level.close = function (cb) { cb(new Error('error_l')) }
+
+    var expected = {'incoming': 'error_i', 'outgoing': 'error_o', 'sublevel': 'error_s', 'level': 'error_l'}
+    errorManager.close(function (err) {
+      should.deepEqual(JSON.parse(err.message), expected)
+      errorManager.incoming.close = incomingCloseSaved
+      errorManager.outgoing.close = outgoingCloseSaved
+      errorManager._sublevel.close = subLevelCloseSaved
+      errorManager._level.close = levelCloseSaved
+      errorManager.close(function (err) {
+        should.not.exist(err)
+        done()
+      })
     })
   })
 })

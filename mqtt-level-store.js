@@ -146,10 +146,42 @@ function Manager (path, options) {
 Manager.single = Store
 
 Manager.prototype.close = function (done) {
-  this.incoming.close()
-  this.outgoing.close()
-  this._sublevel.close()
-  this._level.close(done)
+  var incomingCloseCalled = false
+  var outgoingCloseCalled = false
+  var subLevelCloseCalled = false
+  var levelCloseCalled = false
+  var errors = {}
+
+  function tryAllClosed () {
+    if (incomingCloseCalled && outgoingCloseCalled && subLevelCloseCalled && levelCloseCalled) {
+      if (Object.keys(errors).length > 0) {
+        done(new Error(JSON.stringify(errors)))
+      } else {
+        done()
+      }
+    }
+  }
+
+  this.incoming.close(function (err) {
+    incomingCloseCalled = true
+    if (err) errors['incoming'] = err.message
+    tryAllClosed()
+  })
+  this.outgoing.close(function (err) {
+    outgoingCloseCalled = true
+    if (err) errors['outgoing'] = err.message
+    tryAllClosed()
+  })
+  this._sublevel.close(function (err) {
+    subLevelCloseCalled = true
+    if (err) errors['sublevel'] = err.message
+    tryAllClosed()
+  })
+  this._level.close(function (err) {
+    levelCloseCalled = true
+    if (err) errors['level'] = err.message
+    tryAllClosed()
+  })
 }
 
 module.exports = Manager

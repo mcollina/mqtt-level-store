@@ -1,6 +1,6 @@
 # MQTT.js Level Store
 
-Persistent Store for in-flight MQTT.js packets. Works in Node and the Browser thanks to [level-browserify](http://npm.im/level-browserify).
+Persistent Store for in-flight MQTT.js packets. Works in Node and the Browser thanks to [level](http://npm.im/level).
 
 ## Installation
 

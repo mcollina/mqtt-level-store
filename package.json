@@ -29,7 +29,7 @@
     "level-test": "^6.0.0",
     "levelup": "^4.0.1",
     "mocha": "^3.0.0",
-    "mqtt": "https://github.com/mqttjs/MQTT.js.git",
+    "mqtt": "^3.0.0",
     "mqtt-connection": "^4.0.0",
     "pre-commit": "^1.2.2",
     "should": "^12.0.0",

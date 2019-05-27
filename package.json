@@ -20,17 +20,17 @@
     "url": "git://github.com/mcollina/mqtt-level-store.git"
   },
   "dependencies": {
-    "level-browserify": "^1.1.1",
+    "level": "^5.0.0",
     "level-sublevel": "^6.6.1",
     "msgpack5": "^3.5.1"
   },
   "devDependencies": {
     "concat-stream": "^1.6.0",
-    "level-test": "^2.0.3",
-    "levelup": "^1.3.9",
+    "level-test": "^6.0.0",
+    "levelup": "^4.0.1",
     "mocha": "^3.0.0",
-    "mqtt": "^2.0.0",
-    "mqtt-connection": "^3.1.0",
+    "mqtt": "^3.0.0",
+    "mqtt-connection": "^4.0.0",
     "pre-commit": "^1.2.2",
     "should": "^12.0.0",
     "standard": "^10.0.3"

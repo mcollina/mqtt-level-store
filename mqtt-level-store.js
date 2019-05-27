@@ -1,6 +1,6 @@
 'use strict'
 
-var level = require('level-browserify')
+var level = require('level')
 var sublevel = require('level-sublevel')
 var msgpack = require('msgpack5')
 
@@ -99,7 +99,6 @@ Store.prototype.del = function (packet, cb) {
           ]
           that._level.batch(
             cmd,
-            that._levelOpts,
             function (err) {
               if (err) return cb(err)
               cb(null, _packet)

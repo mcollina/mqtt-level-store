@@ -48,8 +48,8 @@ Store.prototype.put = function (packet, cb) {
       if (err) {
         if (!err.notFound) return cb(err)
         var cmd = [
-          {type: 'put', key: 'packets~' + packet.messageId, value: date},
-          {type: 'put', key: 'packet-by-date~' + date + '~' + packet.messageId, value: packet}
+          { type: 'put', key: 'packets~' + packet.messageId, value: date },
+          { type: 'put', key: 'packet-by-date~' + date + '~' + packet.messageId, value: packet }
         ]
         that._level.batch(cmd, that._levelOpts, cb)
       } else {
@@ -94,8 +94,8 @@ Store.prototype.del = function (packet, cb) {
         function (err, _packet) {
           if (err) return cb(err)
           var cmd = [
-            {type: 'del', key: 'packets~' + packet.messageId},
-            {type: 'del', key: 'packet-by-date~' + date + '~' + packet.messageId}
+            { type: 'del', key: 'packets~' + packet.messageId },
+            { type: 'del', key: 'packet-by-date~' + date + '~' + packet.messageId }
           ]
           that._level.batch(
             cmd,

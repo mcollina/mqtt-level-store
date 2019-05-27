@@ -60,7 +60,7 @@ describe('mqtt level store manager close', function () {
     errorManager._sublevel.close = function (cb) { cb(new Error('error_s')) }
     errorManager._level.close = function (cb) { cb(new Error('error_l')) }
 
-    var expected = {'incoming': 'error_i', 'outgoing': 'error_o', 'sublevel': 'error_s', 'level': 'error_l'}
+    var expected = { 'incoming': 'error_i', 'outgoing': 'error_o', 'sublevel': 'error_s', 'level': 'error_l' }
     errorManager.close(function (err) {
       should.deepEqual(JSON.parse(err.message), expected)
       errorManager.incoming.close = incomingCloseSaved
@@ -87,13 +87,17 @@ describe('mqtt.connect flow', function () {
       var client = Connection(stream)
 
       client.on('connect', function () {
-        client.connack({returnCode: 0})
+        client.connack({ returnCode: 0 })
       })
 
       server.emit('client', client)
     })
 
     manager = mqttLevelStore({ level: level() })
+  })
+
+  afterEach(function (done) {
+    server.close(done)
   })
 
   it('should resend messages by published order', function (done) {
@@ -105,9 +109,9 @@ describe('mqtt.connect flow', function () {
     })
 
     client.nextId = 65535
-    client.publish('topic', 'payload1', {qos: 1})
-    client.publish('topic', 'payload2', {qos: 1})
-    client.publish('topic', 'payload3', {qos: 1})
+    client.publish('topic', 'payload1', { qos: 1 })
+    client.publish('topic', 'payload2', { qos: 1 })
+    client.publish('topic', 'payload3', { qos: 1 })
     server.once('client', function (serverClient) {
       serverClient.once('publish', function () {
         serverClient.stream.destroy()

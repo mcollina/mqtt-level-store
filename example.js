@@ -13,7 +13,7 @@ client = mqtt.connect({
 
 client.on('connect', function () {
   console.log('connected')
-  client.publish('hello', 'world', {qos: 1}, function () {
+  client.publish('hello', 'world', { qos: 1 }, function () {
     console.log('published')
     client.end()
   })

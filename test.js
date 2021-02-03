@@ -148,3 +148,69 @@ describe('mqtt.connect flow', function () {
     })
   })
 })
+
+// Topic Alias extract scenario
+// Topic Alias mapping
+// 'topic1' : 123
+// Topic Aliased packet is TopicName: '', Property TopicAlias: 123
+// Overwrite
+// TopicName: '' to 'topic1', remove Property TopicAlias
+describe.only('overwrite', function () {
+  var manager
+
+  beforeEach(function () {
+    manager = mqttLevelStore({ level: level() })
+  })
+
+  afterEach(function (done) {
+    manager.close(done)
+  })
+
+  function testOverwrite (store, done) {
+    var packet = {
+      cmd: 'publish',
+      topic: '',
+      payload: 'msg',
+      qos: 1,
+      retain: false,
+      messageId: 1,
+      dup: false,
+      properties: { topicAlias: 123 }
+    }
+
+    store.put(packet, function (err) {
+      if (!err) {
+        store.get(packet, function (err, packet2) {
+          if (!err) {
+            packet2.should.have.property('topic', '')
+            packet2.should.have.property('properties')
+            packet2.properties.should.have.property('topicAlias', 123)
+
+            packet2.topic = 'topic1'
+            packet2.properties = {}
+            store.put(packet2, function (err) {
+              if (!err) {
+                store.get(packet2, function (err, packet3) {
+                  if (!err) {
+                    packet3.should.have.property('topic', 'topic1')
+                    packet3.should.have.property('properties')
+                    packet2.properties.should.not.have.property('topicAlias')
+                    done()
+                  }
+                })
+              }
+            })
+          }
+        })
+      }
+    })
+  }
+
+  it('should be able to overwrite incoming', function (done) {
+    testOverwrite(manager.incoming, done)
+  })
+
+  it('should be able to overwrite outgoing', function (done) {
+    testOverwrite(manager.outgoing, done)
+  })
+})

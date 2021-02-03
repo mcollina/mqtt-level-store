@@ -155,7 +155,7 @@ describe('mqtt.connect flow', function () {
 // Topic Aliased packet is TopicName: '', Property TopicAlias: 123
 // Overwrite
 // TopicName: '' to 'topic1', remove Property TopicAlias
-describe.only('overwrite', function () {
+describe('overwrite', function () {
   var manager
 
   beforeEach(function () {

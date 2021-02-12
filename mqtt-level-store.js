@@ -58,7 +58,6 @@ Store.prototype.put = function (packet, cb) {
           that._levelOpts,
           function (err, _packet) {
             if (err) return cb(err)
-            if (packet.cmd === _packet.cmd) return cb()
             that._level.put('packet-by-date~' + _date + '~' + packet.messageId, packet, that._levelOpts, cb)
           })
       }

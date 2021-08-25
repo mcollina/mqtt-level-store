@@ -2,14 +2,15 @@
 
 /* eslint-env mocha */
 
-var abstractTest = require('mqtt/test/abstract_store')
-var level = require('level-test')()
-var mqttLevelStore = require('./')
-var mqtt = require('mqtt')
-var Connection = require('mqtt-connection')
-var concat = require('concat-stream')
-var net = require('net')
-var should = require('should')
+// Borrowed from MQTT.js test files
+const abstractTest = require('./abstract_store')
+const level = require('level-test')()
+const mqttLevelStore = require('./')
+const mqtt = require('mqtt')
+const Connection = require('mqtt-connection')
+const concat = require('concat-stream')
+const net = require('net')
+const should = require('should')
 
 describe('mqtt level store', function () {
   abstractTest(function (done) {
@@ -18,7 +19,7 @@ describe('mqtt level store', function () {
 })
 
 describe('mqtt level store manager', function () {
-  var manager
+  let manager
 
   beforeEach(function () {
     manager = mqttLevelStore({ level: level() })
@@ -43,29 +44,26 @@ describe('mqtt level store manager', function () {
 
 describe('mqtt level store manager close', function () {
   it('should finish successfully.', function (done) {
-    var manager = mqttLevelStore({ level: level() })
+    const manager = mqttLevelStore({ level: level() })
     manager.close(done)
   })
 
   it('should return errors when failed to close.', function (done) {
-    var errorManager = mqttLevelStore({ level: level() })
+    const errorManager = mqttLevelStore({ level: level() })
 
-    var incomingCloseSaved = errorManager.incoming.close
-    var outgoingCloseSaved = errorManager.outgoing.close
-    var subLevelCloseSaved = errorManager._sublevel.close
-    var levelCloseSaved = errorManager._level.close
+    const incomingCloseSaved = errorManager.incoming.close
+    const outgoingCloseSaved = errorManager.outgoing.close
+    const levelCloseSaved = errorManager._level.close
 
     errorManager.incoming.close = function (cb) { cb(new Error('error_i')) }
     errorManager.outgoing.close = function (cb) { cb(new Error('error_o')) }
-    errorManager._sublevel.close = function (cb) { cb(new Error('error_s')) }
     errorManager._level.close = function (cb) { cb(new Error('error_l')) }
 
-    var expected = { 'incoming': 'error_i', 'outgoing': 'error_o', 'sublevel': 'error_s', 'level': 'error_l' }
+    const expected = { incoming: 'error_i', outgoing: 'error_o', level: 'error_l' }
     errorManager.close(function (err) {
       should.deepEqual(JSON.parse(err.message), expected)
       errorManager.incoming.close = incomingCloseSaved
       errorManager.outgoing.close = outgoingCloseSaved
-      errorManager._sublevel.close = subLevelCloseSaved
       errorManager._level.close = levelCloseSaved
       errorManager.close(function (err) {
         should.not.exist(err)
@@ -76,15 +74,15 @@ describe('mqtt level store manager close', function () {
 })
 
 describe('mqtt.connect flow', function () {
-  var server
-  var manager
+  let server
+  let manager
 
   beforeEach(function (done) {
     server = new net.Server()
     server.listen(8883, done)
 
     server.on('connection', function (stream) {
-      var client = Connection(stream)
+      const client = Connection(stream)
 
       client.on('connect', function () {
         client.connack({ returnCode: 0 })
@@ -101,8 +99,8 @@ describe('mqtt.connect flow', function () {
   })
 
   it('should resend messages by published order', function (done) {
-    var serverCount = 0
-    var client = mqtt.connect({
+    let serverCount = 0
+    const client = mqtt.connect({
       port: 8883,
       incomingStore: manager.incoming,
       outgoingStore: manager.outgoing
@@ -147,6 +145,42 @@ describe('mqtt.connect flow', function () {
       })
     })
   })
+  it('should not send end after reading last entry', function (done) {
+    const packet = {
+      cmd: 'publish',
+      topic: '',
+      payload: 'msg',
+      qos: 1,
+      retain: false,
+      messageId: 1,
+      dup: false,
+      properties: { topicAlias: 123 }
+    }
+    manager.outgoing.put(packet, function (err) {
+      should.equal(err === null || err === undefined, true)
+      const outStream = manager.outgoing.createStream()
+      let haveRead = false
+      let shouldEnd = false
+      function readPacket () {
+        const pkt = outStream.read(1)
+        if (pkt === null) {
+          if (haveRead) {
+            shouldEnd = true
+          }
+          outStream.once('readable', readPacket)
+        } else {
+          haveRead = true
+          setTimeout(readPacket, 10) // setImmediate is not good enough
+        }
+      }
+
+      outStream.on('end', function () {
+        should.equal(shouldEnd, true)
+        done()
+      })
+      readPacket()
+    })
+  })
 })
 
 // Topic Alias extract scenario
@@ -156,7 +190,7 @@ describe('mqtt.connect flow', function () {
 // Overwrite
 // TopicName: '' to 'topic1', remove Property TopicAlias
 describe('overwrite', function () {
-  var manager
+  let manager
 
   beforeEach(function () {
     manager = mqttLevelStore({ level: level() })
@@ -167,7 +201,7 @@ describe('overwrite', function () {
   })
 
   function testOverwrite (store, done) {
-    var packet = {
+    const packet = {
       cmd: 'publish',
       topic: '',
       payload: 'msg',

@@ -1,11 +1,9 @@
 'use strict'
 
-var mqtt = require('mqtt')
-var levelStore = require('./')
-var manager = levelStore('db')
-var client
-
-client = mqtt.connect({
+const mqtt = require('mqtt')
+const levelStore = require('./')
+const manager = levelStore('db')
+const client = mqtt.connect({
   port: 1883,
   incomingStore: manager.incoming,
   outgoingStore: manager.outgoing

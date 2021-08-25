@@ -1,8 +1,8 @@
 'use strict'
 
-var level = require('level')
-var sublevel = require('level-sublevel')
-var msgpack = require('msgpack5')
+const level = require('level')
+const sublevel = require('subleveldown')
+const msgpack = require('msgpack5')
 
 function Store (options) {
   if (!(this instanceof Store)) {
@@ -31,7 +31,7 @@ const zeroPadding = (function () {
 })()
 
 Store.prototype.put = function (packet, cb) {
-  var date = new Date().toISOString()
+  let date = new Date().toISOString()
   if (this._prevDate === date) {
     ++this._sameDateCount
   } else {
@@ -40,14 +40,14 @@ Store.prototype.put = function (packet, cb) {
   }
   date += zeroPadding(this._sameDateCount)
 
-  var that = this
+  const that = this
   this._level.get(
     'packets~' + packet.messageId,
     this._levelOpts,
     function (err, _date) {
       if (err) {
         if (!err.notFound) return cb(err)
-        var cmd = [
+        const cmd = [
           { type: 'put', key: 'packets~' + packet.messageId, value: date },
           { type: 'put', key: 'packet-by-date~' + date + '~' + packet.messageId, value: packet }
         ]
@@ -66,7 +66,7 @@ Store.prototype.put = function (packet, cb) {
 }
 
 Store.prototype.get = function (packet, cb) {
-  var that = this
+  const that = this
   this._level.get(
     'packets~' + packet.messageId,
     this._levelOpts,
@@ -81,7 +81,7 @@ Store.prototype.get = function (packet, cb) {
 }
 
 Store.prototype.del = function (packet, cb) {
-  var that = this
+  const that = this
   this._level.get(
     'packets~' + packet.messageId,
     this._levelOpts,
@@ -92,7 +92,7 @@ Store.prototype.del = function (packet, cb) {
         that._levelOpts,
         function (err, _packet) {
           if (err) return cb(err)
-          var cmd = [
+          const cmd = [
             { type: 'del', key: 'packets~' + packet.messageId },
             { type: 'del', key: 'packet-by-date~' + date + '~' + packet.messageId }
           ]
@@ -108,7 +108,7 @@ Store.prototype.del = function (packet, cb) {
 }
 
 Store.prototype.createStream = function () {
-  var opts = this._levelOpts
+  const opts = this._levelOpts
   opts.keys = false
   opts.lt = 'packet-by-date~\xff'
   opts.gt = 'packet-by-date~'
@@ -136,22 +136,21 @@ function Manager (path, options) {
     this._level = level(path, options)
   }
 
-  this._sublevel = sublevel(this._level)
-  this.incoming = new Store({ level: this._sublevel.sublevel('incoming') })
-  this.outgoing = new Store({ level: this._sublevel.sublevel('outgoing') })
+  this._sublevel = sublevel
+  this.incoming = new Store({ level: this._sublevel(this._level, 'incoming') })
+  this.outgoing = new Store({ level: this._sublevel(this._level, 'outgoing') })
 }
 
 Manager.single = Store
 
 Manager.prototype.close = function (done) {
-  var incomingCloseCalled = false
-  var outgoingCloseCalled = false
-  var subLevelCloseCalled = false
-  var levelCloseCalled = false
-  var errors = {}
+  let incomingCloseCalled = false
+  let outgoingCloseCalled = false
+  let levelCloseCalled = false
+  const errors = {}
 
   function tryAllClosed () {
-    if (incomingCloseCalled && outgoingCloseCalled && subLevelCloseCalled && levelCloseCalled) {
+    if (incomingCloseCalled && outgoingCloseCalled && levelCloseCalled) {
       if (Object.keys(errors).length > 0) {
         done(new Error(JSON.stringify(errors)))
       } else {
@@ -162,22 +161,17 @@ Manager.prototype.close = function (done) {
 
   this.incoming.close(function (err) {
     incomingCloseCalled = true
-    if (err) errors['incoming'] = err.message
+    if (err) errors.incoming = err.message
     tryAllClosed()
   })
   this.outgoing.close(function (err) {
     outgoingCloseCalled = true
-    if (err) errors['outgoing'] = err.message
-    tryAllClosed()
-  })
-  this._sublevel.close(function (err) {
-    subLevelCloseCalled = true
-    if (err) errors['sublevel'] = err.message
+    if (err) errors.outgoing = err.message
     tryAllClosed()
   })
   this._level.close(function (err) {
     levelCloseCalled = true
-    if (err) errors['level'] = err.message
+    if (err) errors.level = err.message
     tryAllClosed()
   })
 }
